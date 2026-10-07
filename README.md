@@ -78,7 +78,6 @@
 | `图像分类数据集.ipynb` | d2l 数据集章节笔记 |
 | `隐藏层是怎么克服线性模型限制的.ipynb` | d2l MLP 章节笔记 |
 | `softmax的简洁实现.ipynb` | d2l softmax 章节笔记 |
-| `opencvtest.ipynb` | 跟 OpenCV 教程的练习，和上面无关 |
 | `layer_compare.png` | 层数 / Dropout 三组对比（15 epoch） |
 | `dropout_compare.png` | 只改 Dropout 的单变量对比（10 epoch） |
 | `training_curves.png` | 2 层 + SGD lr=0.5 的基线曲线 |
