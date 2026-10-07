@@ -75,7 +75,6 @@
 | 文件 | 说明 |
 |---|---|
 | `Fashion-MNIST.ipynb` | 主 notebook：数据 / 模型 / 损失 / 优化器 / evaluate / 可视化 / 训练循环 |
-| `图像分类数据集.ipynb` | d2l 数据集章节笔记 |
 | `隐藏层是怎么克服线性模型限制的.ipynb` | d2l MLP 章节笔记 |
 | `softmax的简洁实现.ipynb` | d2l softmax 章节笔记 |
 | `layer_compare.png` | 层数 / Dropout 三组对比（15 epoch） |
