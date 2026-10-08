@@ -15,7 +15,7 @@
 
 ![Fashion-MNIST 样例](fashion_mnist_grid.png)
 
-基线曲线（2 层 256-128，SGD lr=0.5，10 epoch）：
+基线曲线（2 隐藏层 256-128，Adam lr=1e-3，10 epoch）：
 
 ![基线训练曲线](training_curves.png)
 
@@ -116,7 +116,7 @@ Adam  0.8404 0.8633 0.8701 0.8753 0.8791 0.8828 0.8807 0.8798 0.8846 0.8870
 | `optimizer_compare.png` | SGD / Adam / 层数 三方对比（10 epoch） |
 | `layer_compare.png` | 层数 / Dropout 三组对比（15 epoch） |
 | `dropout_compare.png` | 只改 Dropout 的单变量对比（10 epoch） |
-| `training_curves.png` | 2 层 + SGD lr=0.5 的基线曲线 |
+| `training_curves.png` | 2 隐藏层 + Adam lr=1e-3 的基线曲线 |
 | `fashion_mnist_grid.png` | 数据集样例图 |
 
 ## 环境
