@@ -111,8 +111,6 @@ Adam  0.8404 0.8633 0.8701 0.8753 0.8791 0.8828 0.8807 0.8798 0.8846 0.8870
 | 文件 | 说明 |
 |---|---|
 | `Fashion-MNIST.ipynb` | 主 notebook：数据 / 模型 / 损失 / 优化器 / evaluate / 可视化 / 训练循环 |
-| `隐藏层是怎么克服线性模型限制的.ipynb` | d2l MLP 章节笔记 |
-| `softmax的简洁实现.ipynb` | d2l softmax 章节笔记 |
 | `optimizer_compare.png` | SGD / Adam / 层数 三方对比（10 epoch） |
 | `layer_compare.png` | 层数 / Dropout 三组对比（15 epoch） |
 | `dropout_compare.png` | 只改 Dropout 的单变量对比（10 epoch） |

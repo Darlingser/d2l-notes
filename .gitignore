@@ -30,3 +30,7 @@ _top.png
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# ---- 本地练习草稿，不进仓库 ----
+opencv/
+I want to learn.ipynb
