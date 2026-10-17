@@ -55,7 +55,7 @@ in_features * out_features + out_features
 | 合计 | 235,146 |
 
 32×32 模型的第一层是 Linear(1024, 256)，总参数量为 296,586。
-如果改了 `IMG_SIZE` 但第一层仍写 784，32×32 输入会报维度不匹配。`train.py` 用 `img_size * img_size` 自动计算，不会出现这个问题。
+notebook 和 `train.py` 都使用 `IMG_SIZE * IMG_SIZE` / `img_size * img_size` 自动计算第一层输入。打印结果仍是 784，通常不是代码写死，而是模型 cell 没有重跑、`net` 还是旧对象，或者看到的是 notebook 上次保存的旧输出。
 
 ## 实验结果
 
@@ -135,9 +135,10 @@ ankle boot -> sneaker  56 张
 ## 注意事项
 
 - 修改 notebook 参数后先重启内核并从头运行，或直接使用 `train.py`。只改中间 cell 再运行，`net`、`optimizer` 和 `DataLoader` 可能还是旧配置。
+- notebook 保存的输出可能滞后。运行打印 cell 只会刷新显示，不会重建 `net`、`train_set` 或 `test_iter`。修改 `IMG_SIZE` 后要重跑数据、模型、训练和评估 cell，或选择 Restart & Run All。
 - 目前每组只跑了一个 seed。小于 0.5 pt 的差异不能当作确定结论，建议用 3 个 seed 取平均值。
 - 比较激活函数时必须固定优化器、学习率、层数和 epoch。ReLU Adam 与 Sigmoid SGD 的差异同时包含激活函数和优化器的影响。
-- notebook 中的一次运行是 88.66%，`train.py` 同一配置是 88.70%。两者数据加载和随机顺序实现不同，0.04 pt 属于正常波动。正式对照以 `results/` 为准。
+- notebook 之前一次 28×28 运行是 88.66%，`train.py` 同一配置是 88.70%。两者数据加载和随机顺序实现不同，0.04 pt 属于正常波动。正式对照以 `results/` 为准。
 - 旧图片 `optimizer_compare.png`、`layer_compare.png`、`dropout_compare.png`、`training_curves.png` 来自之前的 notebook，未纳入本次 `train.py` 复现。
 
 ## 文件说明
