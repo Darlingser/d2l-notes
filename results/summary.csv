@@ -1,0 +1,7 @@
+run_id,img_size,activation,optimizer,lr,epochs,seed,params,train_acc,test_acc,gap_pt,test_loss,source,notes
+img28_relu_adam_ep10_seed42,28,relu,adam,0.001,10,42,235146,0.921967,0.887,3.5,0.329984,train.py,
+img28_relu_sgd_ep10_seed42,28,relu,sgd,0.5,10,42,235146,0.915083,0.8852,2.99,0.335454,train.py,
+img28_sigmoid_sgd_ep10_seed42,28,sigmoid,sgd,0.5,10,42,235146,0.880483,0.8621,1.84,0.382163,train.py,
+img32_relu_adam_ep10_seed42,32,relu,adam,0.001,10,42,296586,0.914617,0.8902,2.44,0.316368,train.py,
+img28_3layer_relu_adam_ep10_seed42,28,relu,adam,0.001,10,42,300938,,0.891,3.05,0.3242,README historical,3 hidden layers; 10 epochs
+img28_3layer_dropout_adam_ep15_seed42,28,relu,adam,0.001,15,42,300938,,0.8903,2.42,,README historical,Dropout 0.2; best test acc over 15 epochs

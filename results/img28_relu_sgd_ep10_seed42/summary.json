@@ -1,0 +1,21 @@
+{
+  "run_id": "img28_relu_sgd_ep10_seed42",
+  "config": {
+    "run_id": "img28_relu_sgd_ep10_seed42",
+    "img_size": 28,
+    "activation": "relu",
+    "optimizer": "sgd",
+    "lr": 0.5,
+    "epochs": 10,
+    "batch_size": 256,
+    "seed": 42,
+    "params": 235146,
+    "device": "cuda",
+    "torch_version": "2.13.0+cu126"
+  },
+  "final_train_loss": 0.225897,
+  "final_train_acc": 0.915083,
+  "final_test_loss": 0.335454,
+  "final_test_acc": 0.8852,
+  "gap_pt": 2.99
+}

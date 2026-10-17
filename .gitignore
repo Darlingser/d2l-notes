@@ -34,3 +34,8 @@ Desktop.ini
 # ---- 本地练习草稿，不进仓库 ----
 opencv/
 I want to learn.ipynb
+
+# ---- 其他本地目录 ----
+Resources/
+results_smoke/
+_tmp*

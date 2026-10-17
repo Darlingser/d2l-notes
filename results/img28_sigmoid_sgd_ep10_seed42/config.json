@@ -1,0 +1,13 @@
+{
+  "run_id": "img28_sigmoid_sgd_ep10_seed42",
+  "img_size": 28,
+  "activation": "sigmoid",
+  "optimizer": "sgd",
+  "lr": 0.5,
+  "epochs": 10,
+  "batch_size": 256,
+  "seed": 42,
+  "params": 235146,
+  "device": "cuda",
+  "torch_version": "2.13.0+cu126"
+}

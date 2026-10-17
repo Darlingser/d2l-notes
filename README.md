@@ -1,150 +1,156 @@
-# Fashion-MNIST 图像分类（d2l 复现 + 我的对照实验）
+# Fashion-MNIST 分类实验
 
-跟《动手学深度学习》(d2l) 敲的 softmax 回归 / MLP 章节，用 GPU 跑 Fashion-MNIST 十分类。
+用 PyTorch 训练 MLP，比较激活函数、输入尺寸、优化器和隐藏层数。可复现实验由 `train.py` 完成，详细指标保存在 `results/`。`Fashion-MNIST.ipynb` 用于逐步查看数据、模型、训练过程和可视化。
 
-主要记录了MLP在不同隐藏层下以及相同隐藏层不同先激活函数下的数据对照实验。
-## 结果
+## 运行
 
-- 模型：`Flatten -> Linear(784,256) -> ReLU -> Linear(256,256) -> ReLU -> Linear(256,128) -> ReLU -> Linear(128,10)`
-- 300,938 参数，Adam `lr=1e-3`，batch 256，10 epoch
-- 测试集准确率 **89.1%**，train/test gap **+3.05 pt**
-- 10 轮约 2.5 分钟（RTX 4060 Laptop）
-
-数据集样例：
-
-![Fashion-MNIST 样例](fashion_mnist_grid.png)
-
-基线曲线（2 隐藏层 256-128，Adam lr=1e-3，10 epoch）：
-
-![基线训练曲线](training_curves.png)
-
-## 对照实验
-
-所有对照都是同一份数据、同一个 `torch.manual_seed(42)`、同一批顺序，只改一个变量。
-
-### 1. 优化器：SGD 还是 Adam
-
-同一个 2 隐藏层网络（784-256-128-10），10 epoch：
-
-| 优化器 | 参数量 | 最后 test acc | train/test gap | 最后 test loss |
-|---|---|---|---|---|
-| SGD `lr=0.5` | 235,146 | 0.8852 | **+2.99 pt** | 0.3355 |
-| Adam `lr=1e-3` | 235,146 | **0.8870** | +3.50 pt | 0.3300 |
-
-逐 epoch test acc：
-
-```
-SGD   0.7280 0.8396 0.8394 0.8729 0.8640 0.8510 0.8570 0.8740 0.8720 0.8852
-Adam  0.8404 0.8633 0.8701 0.8753 0.8791 0.8828 0.8807 0.8798 0.8846 0.8870
+```bash
+uv sync
+python train.py --img-size 28 --activation relu --optimizer adam --epochs 10 --seed 42
 ```
 
-- 终点几乎打平（差 0.18 pt），但**过程完全不同**。SGD 的 test acc 在 ±1.5 pt 里来回跳（第 5 到第 6 轮从 0.8640 掉到 0.8510 又回升），test loss 第一轮高达 0.8167、之后 0.44/0.36/0.42 上下翻；Adam 从 0.8404 单调爬到 0.8870，test loss 平滑压到 0.3300。
-- 第一轮差距最大：SGD 的 train acc 只有 0.7458，Adam 已经 0.8130。
-- 所以「SGD 得给到 0.5」这句话是对的，但 **lr=0.5 的裸 SGD 只是「能走」，很吵**。想让它稳，得配 `momentum=0.9` 或者学习率衰减。
+常用参数：
 
-### 2. 隐藏层数：2 层还是 3 层
+```text
+--img-size   28 或 32
+--activation relu 或 sigmoid
+--optimizer  adam 或 sgd
+--lr         默认 Adam 1e-3，SGD 0.5
+--epochs     训练轮数
+--batch-size 默认 256
+--seed       默认 42
+```
 
-都用 Adam `lr=1e-3`，10 epoch：
+每次运行会在 `results/<run_id>/` 下保存配置、逐 epoch 指标、每类指标、混淆矩阵和曲线。
+相同参数会写入同一个 `run_id` 目录并覆盖旧文件；改变图像尺寸、激活函数、优化器或 epoch 会生成新目录。
 
-| 网络结构 | 参数量 | test acc | gap | test loss |
-|---|---|---|---|---|
-| 784-256-128-10（2 隐藏层） | 235,146 | 0.8870 | +3.50 pt | 0.3300 |
-| 784-256-256-128-10（3 隐藏层） | 300,938 | **0.8910** | **+3.05 pt** | 0.3242 |
+## 数据与模型
 
-- 多一层换来 **+0.40 pt** test acc，代价是 **+28% 参数**（23.5 万涨到 30.1 万），gap 反而小了 0.45 pt。
-- 有收益，但很薄。60k 样本这个量级上，堆层的边际效益已经很低，瓶颈不在容量。
+Fashion-MNIST 共有 60,000 张训练图、10,000 张测试图，原始尺寸为 28×28，共 10 类。代码使用 `mean=0.2860`、`std=0.3530` 做归一化。
 
-![SGD / Adam / 层数 三方对比](optimizer_compare.png)
+28×28 的模型结构：
 
-### 3. Dropout 到底有没有用
+```python
+nn.Flatten(),
+nn.Linear(28 * 28, 256), nn.ReLU(),
+nn.Linear(256, 128), nn.ReLU(),
+nn.Linear(128, 10)
+```
 
-同 seed(42)、同数据顺序，各跑 15 epoch：
+`28 * 28 = 784` 不是固定规则，而是 Fashion-MNIST 原始图片展开后的长度。改成 32×32 后，第一层自动变成 `nn.Linear(32 * 32, 256)`，输入维度是 1024。
 
-| 配置 | 参数量 | gap@10 | gap@15 | 最好 test acc |
-|---|---|---|---|---|
-| 2 层 256-128 | 235,146 | +3.50 pt | +4.35 pt | 0.8932 |
-| 3 层 256-256-128 | 300,938 | +3.05 pt | +4.74 pt | 0.8942 |
-| 3 层 + Dropout(0.2) | 300,938 | **+1.84 pt** | **+2.42 pt** | 0.8903 |
+`nn.Linear(in_features, out_features)` 的参数量为：
 
-- **Dropout 是唯一起作用的那个**：gap 从 3.05 压到 1.84 pt，test loss 从第 11 轮起不再抬头。
-- **多加一层不划算**：多 28% 参数，只换来 best test +0.1 pt。60k 样本配 23 万参数，缺的是正则不是容量。
-- 一个反直觉的点：两组**都在第 10 轮见底、第 11 轮 test loss 掉头向上**（0.3242 -> 0.3534）。10 epoch 停手刚好卡在拐点上。
+```text
+in_features * out_features + out_features
+```
 
-![层数与 Dropout 对比](layer_compare.png)
+28×28 模型的计算：
 
-（`dropout_compare.png` 是只改 Dropout 一个变量的 10 epoch 版本。）
+| 层 | 参数量 |
+|---|---:|
+| Linear(784, 256) | 200,960 |
+| Linear(256, 128) | 32,896 |
+| Linear(128, 10) | 1,290 |
+| 合计 | 235,146 |
 
-### 4. evaluate 放进 batch 循环会怎样
+32×32 模型的第一层是 Linear(1024, 256)，总参数量为 296,586。
+如果改了 `IMG_SIZE` 但第一层仍写 784，32×32 输入会报维度不匹配。`train.py` 用 `img_size * img_size` 自动计算，不会出现这个问题。
 
-**结果完全不变，但慢到没法用。**
+## 实验结果
 
-参数逐位相同，不影响精度也不影响最终结果；代价是每个 epoch 多算 235 次测试集，约 6.6 s/次，**每轮多花 26 分钟**。evaluate 就该一个 epoch 调一次。
+以下结果全部由 `train.py` 运行，seed=42，训练 10 epoch：
 
-### 5. loss 前再加一层 Softmax 会更好吗
+| 配置 | 参数量 | train acc | test acc | train/test gap | test loss |
+|---|---:|---:|---:|---:|---:|
+| 28×28, ReLU, Adam | 235,146 | 92.20% | 88.70% | 3.50 pt | 0.3300 |
+| 32×32, ReLU, Adam | 296,586 | 91.46% | 89.02% | 2.44 pt | 0.3164 |
+| 28×28, ReLU, SGD lr=0.5 | 235,146 | 91.51% | 88.52% | 2.99 pt | 0.3355 |
+| 28×28, Sigmoid, SGD lr=0.5 | 235,146 | 88.05% | 86.21% | 1.84 pt | 0.3822 |
 
-**会更差，而且是错的。**
+逐 epoch 数据和每组曲线在 `results/`。`results/summary.csv` 是汇总表，`results/activation_compare.csv` 是 ReLU/Sigmoid 每轮对比，`results/activation_compare.png` 是对应曲线。
 
-`CrossEntropyLoss` 内部已经含 `log_softmax`，再叠一个 `nn.Softmax` 等于 softmax 两次，梯度被压扁：
+旧 notebook 还记录过两组更深的模型，但没有用当前 `train.py` 重跑：
 
-| | 第一步梯度范数 | 3 epoch 后 acc |
-|---|---|---|
-| 正确（不加 Softmax） | 0.6547 | 0.8755 |
-| 错误（加 Softmax） | 0.0647 | 0.8404 |
+| 配置 | 参数量 | test acc | gap | test loss |
+|---|---:|---:|---:|---:|
+| 3 隐藏层, ReLU, Adam, 10 epoch | 300,938 | 89.10% | 3.05 pt | 0.3242 |
+| 3 隐藏层 + Dropout 0.2, 15 epoch | 300,938 | 89.03% | 2.42 pt | - |
 
-梯度小了一个数量级，直接学不动。**损失用 `CrossEntropyLoss` 时，模型里永远不要放 Softmax。**
+这两行只作为历史记录。下面的结论主要依据前面四组可复现实验。
 
-## 踩过的坑
+## 结论
 
-| 现象 | 原因 | 修法 |
-|---|---|---|
-| `NameError: name 'e' is not defined` | 把 `1e-3` 写成了 `1-e` | `LR = 1e-3` |
-| Dropout 开了跟没开一样 | PyCharm 自动导入成了 `torch.ao.nn.quantized.Dropout`，那是量化推理用的空壳，训练时一个单元都不丢 | 用 `nn.Dropout` |
-| `AttributeError: 'Tensor' object has no attribute 'CUDA'` | 没有 `.CUDA()` 这个方法 | `.cpu()` |
-| `SyntaxError` | `X = X.to(device), y = y.to(device)`，逗号不是语句分隔符 | 分两行写 |
-| d2l `Animator` 直接崩 | IPython 9 删掉了 `display.set_matplotlib_formats` | 开头加 `d2l.use_svg_display = lambda: None` |
-| 曲线变「平缓」了，是不是过拟合加重 | 层数变多，同一个 lr 下优化变慢，前期爬得慢 | 判断过拟合看 test loss 有没有掉头，不看 train 曲线的斜率 |
-| train loss 在第 2 轮斜率突然变大 | 网络逃出平坦区的正常现象 | 不用管 |
+### 1. ReLU 比 Sigmoid 更合适
+
+在相同条件（28×28、SGD lr=0.5、10 epoch、seed=42）下：
+
+```text
+ReLU    88.52%
+Sigmoid 86.21%
+```
+
+ReLU 高 2.31 pt。第 1 个 epoch 的差距也很明显：ReLU 的 train acc 是 74.58%，Sigmoid 是 59.66%。Sigmoid 的 train/test gap 更小（1.84 pt 对 2.99 pt），但它的 train acc 和 test acc 都更低，不能说明它泛化更好。
+
+### 2. 28×28 和 32×32 的差距不足以证明谁更好
+
+32×32 的 test acc 高 0.32 pt，但只跑了一个 seed，差异小于 0.5 pt。Fashion-MNIST 原图就是 28×28，放大到 32×32 只是插值，没有增加新信息，同时第一层参数从 200,960 增加到 262,400。因此当前数据只能说明两者接近，不能说明 32×32 更好。
+
+### 3. 增加隐藏层带来的收益很小
+
+旧记录中，3 隐藏层比 2 隐藏层高 0.40 pt，但参数量从 235,146 增加到 300,938，多了约 28%。这说明当前模型的瓶颈不只是网络容量。
+
+### 4. 当前是轻度过拟合，不是严重过拟合
+
+28×28 ReLU Adam 的最终 train acc 是 92.20%，test acc 是 88.70%，gap 为 3.50 pt。test loss 在第 6 轮附近约为 0.3285，最后一轮是 0.3300，没有明显持续上升，test acc 也还在缓慢提高。
+
+所以目前是轻度过拟合，同时训练也还没有完全收敛。判断过拟合不能只看 train/test 差距，还要看 test loss 是否持续上升、test acc 是否停止提高。若后续 gap 继续扩大且 test loss 上升，再考虑加强正则化。
+
+### 5. 主要错误集中在上衣类
+
+28×28 ReLU Adam 的每类结果：
+
+| 类别 | precision | recall | F1 |
+|---|---:|---:|---:|
+| shirt | 76.05% | 63.20% | 69.03% |
+| coat | 75.93% | 87.40% | 81.26% |
+| pullover | 81.72% | 79.60% | 80.65% |
+| t-shirt | 83.40% | 84.90% | 84.14% |
+| trouser | 98.29% | 97.70% | 97.99% |
+| bag | 97.10% | 97.10% | 97.10% |
+
+混淆矩阵中的主要错误：
+
+```text
+shirt -> t-shirt      120 张
+shirt -> coat         109 张
+shirt -> pullover      86 张
+pullover -> coat      123 张
+coat -> pullover       71 张
+ankle boot -> sneaker  56 张
+```
+
+`shirt`、`coat`、`pullover`、`t-shirt` 的轮廓和纹理接近，是当前 MLP 的主要失分来源。完整结果见 `results/img28_relu_adam_ep10_seed42/per_class.csv` 和 `confusion_matrix.csv`。
+
+## 注意事项
+
+- 修改 notebook 参数后先重启内核并从头运行，或直接使用 `train.py`。只改中间 cell 再运行，`net`、`optimizer` 和 `DataLoader` 可能还是旧配置。
+- 目前每组只跑了一个 seed。小于 0.5 pt 的差异不能当作确定结论，建议用 3 个 seed 取平均值。
+- 比较激活函数时必须固定优化器、学习率、层数和 epoch。ReLU Adam 与 Sigmoid SGD 的差异同时包含激活函数和优化器的影响。
+- notebook 中的一次运行是 88.66%，`train.py` 同一配置是 88.70%。两者数据加载和随机顺序实现不同，0.04 pt 属于正常波动。正式对照以 `results/` 为准。
+- 旧图片 `optimizer_compare.png`、`layer_compare.png`、`dropout_compare.png`、`training_curves.png` 来自之前的 notebook，未纳入本次 `train.py` 复现。
 
 ## 文件说明
 
-| 文件 | 说明 |
+| 文件 | 内容 |
 |---|---|
-| `Fashion-MNIST.ipynb` | 主 notebook：数据 / 模型 / 损失 / 优化器 / evaluate / 可视化 / 训练循环 |
-| `optimizer_compare.png` | SGD / Adam / 层数 三方对比（10 epoch） |
-| `layer_compare.png` | 层数 / Dropout 三组对比（15 epoch） |
-| `dropout_compare.png` | 只改 Dropout 的单变量对比（10 epoch） |
-| `training_curves.png` | 2 隐藏层 + Adam lr=1e-3 的基线曲线 |
-| `fashion_mnist_grid.png` | 数据集样例图 |
-
-## 环境
-
-实测环境：
-
-```
-Python      3.14.6
-torch       2.13.0+cu126
-torchvision 0.28.0+cu126
-d2l         1.0.3
-numpy       2.4.6
-matplotlib  3.11.1
-GPU         NVIDIA GeForce RTX 4060 Laptop (CUDA 12.6)
-```
-
-复现：
-
-```bash
-git clone <this-repo>
-cd <this-repo>
-uv sync     # pyproject.toml 里配了 pytorch 的 CUDA 索引，会自动装 GPU 版 torch
-```
-
-数据第一次跑会自动下载到 `./data`，不需要手动准备。
-
-## 数据
-
-Fashion-MNIST：60,000 训练 / 10,000 测试，28x28 灰度，10 类。
-全量统计 `mean=0.2860`、`std=0.3530`，notebook 里 `Normalize` 用的就是这两个数。
-
-## 说明
-
-模型结构和训练流程基于 [d2l-ai/d2l-zh](https://github.com/d2l-ai/d2l-zh)，代码为个人学习复现；对照实验、实测数据与踩坑记录为本人补充。
+| `train.py` | 可复现训练和评估脚本 |
+| `Fashion-MNIST.ipynb` | 逐步讲解和交互运行 |
+| `results/summary.csv` | 所有运行的汇总 |
+| `results/activation_compare.csv` | ReLU/Sigmoid 逐 epoch 对比 |
+| `results/activation_compare.png` | ReLU/Sigmoid test acc 和 test loss 曲线 |
+| `results/<run_id>/history.csv` | 每组逐 epoch 指标 |
+| `results/<run_id>/per_class.csv` | 每组每类 precision/recall/F1 |
+| `results/<run_id>/confusion_matrix.csv` | 每组 10×10 混淆矩阵 |
+| `results/<run_id>/curve.png` | 每组 loss/accuracy 曲线 |
+| `results/<run_id>/confusion_matrix.png` | 每组混淆矩阵图 |
