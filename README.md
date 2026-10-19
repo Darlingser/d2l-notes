@@ -122,6 +122,7 @@ Sigmoid 的 train/test gap 更小（1.84 pt 对 2.99 pt），但 train acc 和 t
 28×28 ReLU 下，Adam 的 test acc 是 88.70%，SGD lr=0.5 是 88.52%，最终只差 0.18 pt。
 
 差异主要在前期：第 1 个 epoch Adam 的 test acc 是 84.04%，SGD 是 72.80%。SGD 的 test acc 在第 5 到第 6 轮从 86.40% 降到 85.10%，波动比 Adam 大。
+这应该是因为我用SGD作为优化器时只调节了lr，没有加momentum 和学习衰减率到至的以至于精度不高，但是在小模型训练中这样做会增加开销。
 
 ### 5.4 隐藏层数
 
